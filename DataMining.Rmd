@@ -1,1 +1,18 @@
-serdtfygu
+---
+title: "DataMining"
+output: html_document
+---
+
+```{r}
+croissance  <- read.csv("C:/Users/Adia/Downloads/croissance.csv")
+croissance_club <- read.csv("C:/Users/Adia/Downloads/croissance_club.csv")
+
+
+summary.factor(croissance$ind)
+str(croissance)
+
+summary(croissance_club)
+library(dplyr)
+unique(croissance$ind)
+```
+
