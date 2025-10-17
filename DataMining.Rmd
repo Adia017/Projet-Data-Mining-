@@ -9,10 +9,33 @@ croissance_club <- read.csv("C:/Users/Adia/Downloads/croissance_club.csv")
 
 
 summary.factor(croissance$ind)
-str(croissance)
+str(croissance$age)
+str(croissance_club)
+
 
 summary(croissance_club)
 library(dplyr)
 unique(croissance$ind)
 ```
+```{r}
+ #croissance$age<- round(croissance$age)
+croissance$sexe <- as.factor(croissance$sexe)
+#age a été arrondi 
+# taille est en cm 
+# poids est en kilo
+# IMC est le poids divisé par la taille au carré 
+
+#calcule des moyennes
+# Détection de valeurs manquantes dans les colonnes Age , tailles et poids
+# montrer la croissance des hommes en fonction de du poids de même pour les femmes 
+
+# montrer la croissance des hommes en fonction de du taille de même que pour les femmes
+summary(croissance)
+
+croissance[c(which(is.na(croissance$sexe))),]
+croissance[c(which(is.na(croissance$poids))),]
+croissance[c(which(is.na(croissance$taille))),]
+
+```
+
 
