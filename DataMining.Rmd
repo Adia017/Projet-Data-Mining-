@@ -5,15 +5,13 @@ output: html_document
 
 ```{r}
 croissance  <- read.csv("C:/Users/Adia/Downloads/croissance.csv")
-croissance_club <- read.csv("C:/Users/Adia/Downloads/croissance_club.csv")
-
 
 summary.factor(croissance$ind)
 str(croissance$age)
-str(croissance_club)
+#str(croissance_club)
 
 
-summary(croissance_club)
+#summary(croissance_club)
 library(dplyr)
 unique(croissance$ind)
 ```
@@ -33,9 +31,45 @@ croissance$sexe <- as.factor(croissance$sexe)
 summary(croissance)
 
 croissance[c(which(is.na(croissance$sexe))),]
+
 croissance[c(which(is.na(croissance$poids))),]
 croissance[c(which(is.na(croissance$taille))),]
 
+croissance[croissance$ind == "ind_603",]
 ```
 
+#Traitement du sexe 
+```{r}
+library(dplyr)
+test <- croissance %>%
+  group_by(croissance$ind) %>%  # à adapter : remplace "individu" par le vrai nom de la colonne identifiant (ex: "id" ou "ind")
+  mutate(sexe = first(na.omit(croissance$sexe))) %>%
+  ungroup()
+
+
+t <- which(is.na(croissance$sexe))
+
+which(t)
+test[t,]
+t
+```
+
+# Traitement de la taille (interpolation linéaire)
+```{r}
+library(tidyr)
+library(splines)
+ interpo_linear <- test %>% 
+  group_by(ind) %>% 
+  arrange(age) %>% 
+   mutate(taille_interp = ifelse(is.na(taille),approx(x = age[!is.na(taille)], y = taille[!is.na(taille)],xout = age)$y,taille)) %>%
+  ungroup()
+ 
+ 
+t1<- which(is.na(croissance$taille))
+```
+
+
+```{r}
+summary(interpo_linear)
+```
 
