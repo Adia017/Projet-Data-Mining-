@@ -6,11 +6,19 @@ output:
   pdf_document: default
   html_document: default
 ---
+---
+title: "Untitled"
+author: "Sasso Etien Pierre Jean-David"
+date: "2025-11-18"
+output:
+  html_document: default
+  pdf_document: default
+---
 
 *#Analyse descriptive*
 ```{r}
 # Import des données
-df <- read.csv("/Users/jean-davidsasso/Documents/UCA/DataMining/TP SAE/Données du projet-20251118/croissance_net.csv", header = TRUE, sep = ",")
+df <- read.csv("/Users/jean-davidsasso/Documents/UCA/DataMining/TP SAE/Données du projet-20251118/croissance_net.csv", header = TRUE, sep = ",")
 
 # Aperçu rapide
 head(df)
@@ -39,101 +47,37 @@ df <- df %>%
   )
 ```
 
-*#Pyramide des ages*
 ```{r}
-age_sexe <- df %>%
-  filter(!is.na(sexe), !is.na(age_classe4)) %>%
-  group_by(age_classe4, sexe) %>%
-  summarise(n = n(), .groups = "drop")
+library(ggplot2)
+library(dplyr)
 
-age_sexe <- age_sexe %>%
-  mutate(n_plot = ifelse(sexe == "M", -n, n))
+# On prépare les données : longues → format "long"
+df_plot <- resultat_clean_test %>%
+  select(variable, age_interp, filles = estimate1, garcons = estimate2) %>%
+  tidyr::pivot_longer(cols = c(filles, garcons),
+                      names_to = "sexe",
+                      values_to = "valeur")
 
-# Option : ordre des classes d'âge du bas vers le haut
-age_sexe$age_classe4 <- factor(age_sexe$age_classe4,
-                              levels = rev(levels(age_sexe$age_classe4)))
-
-ggplot(age_sexe, aes(x = age_classe4, y = n_plot, fill = sexe)) +
-  geom_col(width = 0.8) +
-  coord_flip() +
-  scale_y_continuous(labels = abs) +   # on affiche les effectifs en positif
-  scale_fill_manual(values = c("M" = "steelblue", "F" = "lightcoral")) +
+ggplot(df_plot, aes(x = age_interp, y = valeur, color = sexe)) +
+  geom_line(size = 1.4) +
+  facet_wrap(~ variable, scales = "free_y") +
+  theme_minimal(base_size = 14) +
+  scale_color_manual(values = c("filles" = "hotpink", "garcons" = "steelblue")) +
   labs(
-    title = "Pyramide des âges par sexe",
+    title = "Évolution de la taille et du poids selon le sexe",
     x = "Âge",
-    y = "Effectifs"
-  ) +
-  theme_minimal()
+    y = "Valeur (cm ou kg)",
+    color = "Sexe"
+  )
 
 ```
-
-```{r}
-ggplot(df, aes(age, taille)) +
-  geom_smooth(method = "loess", se = FALSE, color = "red", size = 1.2) +
-  labs(title = "Croissance moyenne : taille en fonction de l'âge",
-       x = "Âge (années)", y = "Taille (cm)")
-
-```
-
-
-
-
-
 
 
 #####Analyse pour femmes#####
 
-
-
-
-
 ```{r}
 df_f <- df %>% filter(sexe == "F")
 ```
-
-```{r}
-# Âge
-ggplot(df_f, aes(age)) +
-  geom_histogram(bins = 40, fill = "lightcoral", color = "white") +
-  labs(title = "Distribution de l'âge – Femmes", x = "Âge", y = "Effectif") +
-  theme_minimal()
-
-# Taille
-ggplot(df_f, aes(taille)) +
-  geom_histogram(bins = 40, fill = "lightcoral", color = "white") +
-  labs(title = "Distribution de la taille – Femmes", x = "Taille (cm)", y = "Effectif") +
-  theme_minimal()
-
-# Poids
-ggplot(df_f, aes(poids)) +
-  geom_histogram(bins = 40, fill = "lightcoral", color = "white") +
-  labs(title = "Distribution du poids – Femmes", x = "Poids (kg)", y = "Effectif") +
-  theme_minimal()
-
-# IMC
-ggplot(df_f, aes(imc)) +
-  geom_histogram(bins = 40, fill = "lightcoral", color = "white") +
-  labs(title = "Distribution de l'IMC – Femmes", x = "IMC", y = "Effectif") +
-  theme_minimal()
-
-```
-
-*#L'évolution de la taille et du poid en fonction de l'âge pour les femmes*
-```{r}
-ggplot(df_f, aes(age, taille)) +
-  geom_smooth(method = "loess", se = FALSE, color = "red", size = 1.2) +
-  labs(title = "Évolution de la taille en fonction de l'âge – Femmes",
-       x = "Âge", y = "Taille (cm)") +
-  theme_minimal()
-
-ggplot(df_f, aes(age, poids)) +
-  geom_smooth(method = "loess", se = FALSE, color = "red", size = 1.2) +
-  labs(title = "Évolution du poids en fonction de l'âge – Femmes",
-       x = "Âge", y = "Poids (kg)") +
-  theme_minimal()
-
-```
-
 
 ```{r}
 # Boxplots taille ~ classe d'âge
@@ -151,10 +95,49 @@ ggplot(df_f, aes(age_classe4, poids)) +
   theme_minimal()
 
 ```
+*# Interpretation Taille par classes*
+Il y a une augmentation nette et régulière de la taille lorsque l’on passe d’une classe d’âge à l’autre :
+*-0–5 ans*
+Médiane ≈ 95–100 cm
+Forte variabilité (normal à cet âge)
+Quelques valeurs >120 cm (enfants grands pour leur âge)
+*-6–10 ans:*
+Médiane ≈ 125–130 cm
+Le boxplot s’est déplacé vers le haut → croissance normale
+Dispersion plus faible que chez les 0–5 ans (croissance plus stable)
+*-11–15 ans:*
+Médiane ≈ 155–160 cm
+C’est la classe la plus variable :
+certains garçons sont encore petits (130–140 cm)
+d’autres sont déjà très grands (175–185 cm)
+→ C’est l’effet de la puberté, qui n’arrive pas au même moment pour tous.
+*-16–18 ans:*
+Médiane ≈ 170–175 cm
+Variabilité plus faible → croissance quasi terminée
+Quelques outliers et une dispersitions très faibles 
 
+*# Interpretation poids par classes*
+Le violin plot permet de voir la forme de la distribution, pas seulement la médiane :
+*-0–5 ans:*
+Poids concentré entre 10 et 20 kg
+Distribution très resserrée -> peu de variation (enfants petits)
+Mais quelques rares atteignent les 25-30 kg
+*-6–10 ans:*
+Poids centré autour de 25 kg
+Forme plus large : diversité des morphologies
+Quelques femmes dépassent 50–55 kg
+*11–15 ans:*
+Poids très dispersé (25 à 75 kg)
+C’est la période la plus variable :
+certains sont encore enfants physiquement
+d’autres ont déjà pris beaucoup de masse 
+-> encore une fois, effet direct de la puberté.
+*16–18 ans:*
+Distribution clairement déplacée vers le haut (35–90 kg souvent)
+Quelques valeurs > 90 kg (hauts percentiles ou adolescents sportifs/obèses)
 
-
-
+*Conclusion*
+Chez les filles, la croissance suit un schéma classique : progression régulière de 0 à 10 ans, forte variabilité entre 11 et 15 ans liée à la puberté, puis stabilisation de la taille et poursuite d'une prise de poids entre 16 et 18 ans. Les boxplots et violons mettent en évidence des morphologies très différentes chez les adolescents.
 
 *#Relation poids taille pour les femmes*
 ```{r}
@@ -172,61 +155,12 @@ Les petites tailles (70–120 cm) correspondent à des enfants jeunes ayant des 
 La coloration par âge montre clairement que les adolescentes (couleur claire) occupent la partie supérieure droite du graphique, alors que les enfants plus jeunes (couleur foncée) se situent en bas à gauche.
 Le graphique met donc en évidence une croissance conjointe en taille et en poids, structurée principalement par l’âge.
 
-
-
-
-
-
 # Analyse pour hommes
-
-
-
-
-
-
 
 ```{r}
 df_m <- df %>% filter(sexe == "M")
 ```
 
-```{r}
-ggplot(df_m, aes(age)) +
-  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
-  labs(title = "Distribution de l'âge – Hommes", x = "Âge", y = "Effectif") +
-  theme_minimal()
-
-ggplot(df_m, aes(taille)) +
-  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
-  labs(title = "Distribution de la taille – Hommes", x = "Taille (cm)", y = "Effectif") +
-  theme_minimal()
-
-ggplot(df_m, aes(poids)) +
-  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
-  labs(title = "Distribution du poids – Hommes", x = "Poids (kg)", y = "Effectif") +
-  theme_minimal()
-
-ggplot(df_m, aes(imc)) +
-  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
-  labs(title = "Distribution de l'IMC – Hommes", x = "IMC", y = "Effectif") +
-  theme_minimal()
-
-```
-
-*#L'évolution de la taille et du poid en fonction de l'âge pour les femmes*
-```{r}
-ggplot(df_m, aes(age, taille)) +
-  geom_smooth(method = "loess", se = FALSE, color = "blue", size = 1.2) +
-  labs(title = "Évolution de la taille en fonction de l'âge – Hommes",
-       x = "Âge", y = "Taille (cm)") +
-  theme_minimal()
-
-ggplot(df_m, aes(age, poids)) +
-  geom_smooth(method = "loess", se = FALSE, color = "blue", size = 1.2) +
-  labs(title = "Évolution du poids en fonction de l'âge – Hommes",
-       x = "Âge", y = "Poids (kg)") +
-  theme_minimal()
-
-```
 *#Boxplot et violon*
 ```{r}
 ggplot(df_m, aes(age_classe4, taille)) +
@@ -252,6 +186,7 @@ Quelques valeurs >120 cm (enfants grands pour leur âge)
 Médiane ≈ 125–130 cm
 Le boxplot s’est déplacé vers le haut → croissance normale
 Dispersion plus faible que chez les 0–5 ans (croissance plus stable)
+Mais quelques valeurs supérieur à 150cm
 *-11–15 ans:*
 Médiane ≈ 155–160 cm
 C’est la classe la plus variable :
@@ -283,7 +218,7 @@ Distribution clairement déplacée vers le haut (55–80 kg souvent)
 Quelques valeurs > 90–100 kg (hauts percentiles ou adolescents sportifs/obèses)
 
 *Conclusion*
-Chez les garçons, la croissance staturo-pondérale suit un schéma classique : progression régulière de 0 à 10 ans, forte variabilité entre 11 et 15 ans liée à la puberté, puis stabilisation de la taille et poursuite d'une prise de poids modérée entre 16 et 18 ans. Les boxplots et violons mettent en évidence des morphologies très différentes chez les adolescents, contrastant avec la relative homogénéité des enfants plus jeunes.
+Chez les garçons aussi, la croissance staturo-pondérale suit un schéma classique : progression régulière de 0 à 10 ans, forte variabilité entre 11 et 15 ans liée à la puberté, puis stabilisation de la taille et poursuite d'une prise de poids modérée entre 16 et 18 ans. Les boxplots et violons mettent en évidence des morphologies très différentes chez les adolescents, contrastant avec la relative homogénéité des enfants plus jeunes.
 
 *#Relation poids taille pour les hommes en fonction de l'age*
 ```{r}
@@ -295,35 +230,14 @@ ggplot(df_m, aes(taille, poids, color = age)) +
 
 ```
 
-```{r}
-ggplot(df, aes(age, taille, color = sexe)) +
-  geom_smooth(method = "loess", se = FALSE, size = 1.2) +
-  labs(title = "Courbe de croissance – Taille selon le sexe",
-       x = "Âge", y = "Taille (cm)") +
-  theme_minimal()
-
-ggplot(df, aes(age, poids, color = sexe)) +
-  geom_smooth(method = "loess", se = FALSE, size = 1.2) +
-  labs(title = "Courbe de croissance – Poids selon le sexe",
-       x = "Âge", y = "Poids (kg)") +
-  theme_minimal()
-
-```
-
-```{r}
-ggplot(df, aes(sexe, taille, fill = sexe)) +
-  geom_boxplot() +
-  labs(title = "Taille par sexe", x = "Sexe", y = "Taille (cm)") +
-  theme_minimal()
-
-ggplot(df, aes(sexe, poids, fill = sexe)) +
-  geom_boxplot() +
-  labs(title = "Poids par sexe", x = "Sexe", y = "Poids (kg)") +
-  theme_minimal()
-
-```
+Le nuage de points montre une relation positive et fortement non linéaire entre taille et poids pour les garçons.
+Les petites tailles (70–120 cm) correspondent à des enfants jeunes ayant des poids faibles, avec une croissance relativement régulière.
+À partir de 120 cm et surtout de 140–150 cm, la pente augmente fortement, ce qui correspond à la puberté où le gain en poids devient plus rapide.
+La coloration par âge montre clairement que les adolescentes (couleur claire) occupent la partie supérieure droite du graphique, alors que les enfants plus jeunes (couleur foncée) se situent en bas à gauche.
+Le graphique met donc en évidence une croissance conjointe en taille et en poids, structurée principalement par l’âge.
 
 
+*#Densité du poids et de la taille selon le sexe*
 ```{r}
 ggplot(df, aes(taille, fill = sexe)) +
   geom_density(alpha = 0.4) +
@@ -338,22 +252,46 @@ ggplot(df, aes(poids, fill = sexe)) +
   theme_minimal()
 
 ```
-######Test graphe IMC ####
 
+Vue plus générale sur la densité de la taille et du poids 
 
-library(ggplot2)
+```{r}
 library(dplyr)
 
-ggplot(data_knn, aes(x = age_interp, y = IMC_, color = IMC_flag)) +
-  geom_point(alpha = 0.25, size = 1) +
-  geom_hline(yintercept = 18, linetype = "dashed", color = "blue") +
-  geom_hline(yintercept = 35, linetype = "dashed", color = "blue") +
-  scale_color_manual(values = c("normal" = "grey70", "anormal" = "red")) +
+croissance_agec <- df %>%
+  mutate(age_classe = cut(
+    age,
+    breaks = c(0, 5, 10, 15, 20),
+    labels = c("0–5", "6–10", "11–15", "16–18"),
+    right = FALSE
+  ))
+
+ggplot(croissance_agec, aes(x = taille, fill = sexe)) +
+  geom_density(alpha = 0.4) +
+  facet_wrap(~ age_classe, scales = "free_y") +
+  scale_fill_manual(values = c("F" = "hotpink", "M" = "steelblue")) +
   labs(
-    title = "IMC en fonction de l'âge\navec mise en évidence des valeurs anormales",
-    x = "Âge (années)",
-    y = "IMC",
-    color = "Statut IMC"
+    title = "Densité de la taille selon le sexe par classe d'âge",
+    x = "Tailles(cm)",
+    y = "Densité",
+    fill = "Sexe"
   ) +
   theme_minimal()
+
+
+
+ggplot(croissance_agec, aes(x = poids, fill = sexe)) +
+  geom_density(alpha = 0.4) +
+  facet_wrap(~ age_classe, scales = "free_y") +
+  scale_fill_manual(values = c("F" = "hotpink", "M" = "steelblue")) +
+  labs(
+    title = "Densité de la taille selon le sexe par classe d'âge",
+    x = "Poids (kg)",
+    y = "Densité",
+    fill = "Sexe"
+  ) +
+  theme_minimal()
+```
+Vue plus détaillé de la taille selon le sexe 
+On constate plus de variation quand on regarde plus en détails
 
