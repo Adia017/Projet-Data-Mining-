@@ -6,14 +6,6 @@ output:
   pdf_document: default
   html_document: default
 ---
----
-title: "Untitled"
-author: "Sasso Etien Pierre Jean-David"
-date: "2025-11-18"
-output:
-  html_document: default
-  pdf_document: default
----
 
 *#Analyse descriptive*
 ```{r}
